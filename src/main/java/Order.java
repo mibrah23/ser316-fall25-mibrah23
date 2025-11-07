@@ -265,6 +265,54 @@ public class Order {
      * @return status code indicating result
      */
     public double processOrderItem(MenuItem item, List<String> modifiers) {
+        // 1. Check if order status allows modifications (status < 3)
+        if (orderStatus >= 3) {
+            return 5.0;
+        }
+
+        // 2. Check if item is null
+        if (item == null) {
+            return 3.1;
+        }
+
+        // 3. Validate item ID format (alphanumeric, not null)
+        String itemId = item.getItemId();
+        if (itemId == null || itemId.isEmpty() || !itemId.matches("^[a-zA-Z0-9]+$")) {
+            return 4.1;
+        }
+
+        // 4. Check if item is available
+        if (!item.isAvailable()) {
+            return 3.0;
+        }
+
+        // 5. Check quantity limit (max 5 of same itemId)
+        if (getItemCountById(itemId) >= MAX_ITEM_QUANTITY) {
+            return 2.0;
+        }
+
+        // 6. Validate all modifiers are allowed for this item
+        if (modifiers != null && !modifiers.isEmpty()) {
+            for (String modifier : modifiers) {
+                if (!item.isModifierAllowed(modifier)) {
+                    return 2.1;
+                }
+            }
+        }
+
+        // 7. Calculate total price with modifiers
+        double itemPrice = item.getBasePrice();
+        if (modifiers != null && !modifiers.isEmpty()) {
+            itemPrice += calculateModifierPrice(modifiers);
+        }
+
+        // 8. Add item and update total
+        List<String> modifiersCopy = (modifiers == null) ? new ArrayList<>() : new ArrayList<>(modifiers);
+        OrderItem orderItem = new OrderItem(item, modifiersCopy, itemPrice);
+        items.add(orderItem);
+        totalPrice += itemPrice;
+
+        // 9. Return success code
         return 0.0;
     }
 
