@@ -25,41 +25,150 @@ public class WhiteBoxTestStarter {
 
     private Order order;
     private Table table;
+    private Restaurant restaurant;
 
     @BeforeEach
     public void setUp() {
         order = new Order();
         table = new Table(1, 4);
+        restaurant = new Restaurant("Test Restaurant");
         order.initOrder(table, "Test Customer");
     }
 
-    // ========================================================================
-    // SAMPLE TEST - White-box test for canModifyOrder() method
-    // ========================================================================
 
-    /**
-     * White-box test for canModifyOrder() - Path 1
-     *
-     * CFG Analysis:
-     * - Node 1: Check orderStatus >= 2
-     * - Node 2: Check items.size() >= MAX_TOTAL_ITEMS
-     * - Node 3: Check totalPrice >= MAX_ORDER_TOTAL
-     * - Node 4: return true
-     *
-     * This test covers the path where all conditions are false (happy path).
-     * Coverage: All branches taken (false, false, false -> true)
+    // Control Flow Tests for canModifyOrder()
+
+
+    /*
+      CFG Path 1: Node 1 → 2 → 3
+      Tests: orderStatus >= 2 (first condition true)
+
+      Expected: return false
+      Coverage: Nodes 1, 2, 3 | Edge 2→3
      */
     @Test
-    public void testCanModifyOrder_AllConditionsFalse_ReturnsTrue() {
-        // Arrange: Order with status=0, 0 items, $0 total
-        // (already set up in setUp())
+    public void testCanModifyOrder_StatusAtLimit_ReturnsFalse() {
+        // Arrange: Set status to 2 (at boundary)
+        order.setOrderStatus(2);
 
         // Act
         boolean result = order.canModifyOrder();
 
         // Assert
-        assertTrue(result, "Should allow modifications when status=0, no items, $0 total");
+        assertFalse(result, "Should return false when orderStatus >= 2");
+    }
+
+    /*
+      CFG Path 2: Node 1 → 2 → 4 → 5
+      Tests: orderStatus < 2, items.size() >= MAX_TOTAL_ITEMS (second condition true)
+
+      Expected: return false
+      Coverage: Nodes 1, 2, 4, 5 | Edges 2→4, 4→5
+     */
+    @Test
+    public void testCanModifyOrder_ItemsAtLimit_ReturnsFalse() {
+        // Arrange: Add 5 items (MAX_TOTAL_ITEMS = 5)
+        MenuItem burger = restaurant.getMenuItem("B001");
+        for (int i = 0; i < 5; i++) {
+            order.processOrderItem(burger, null);
+        }
+
+        // Act
+        boolean result = order.canModifyOrder();
+
+        // Assert
+        assertFalse(result, "Should return false when items.size() >= MAX_TOTAL_ITEMS");
+        assertEquals(5, order.getItems().size(), "Should have 5 items");
+    }
+
+    /*
+      CFG Path 3: Node 1 → 2 → 4 → 6 → 7
+      Tests: orderStatus < 2, items < 5, totalPrice >= MAX_ORDER_TOTAL (third condition true)
+
+      Expected: return false
+      Coverage: Nodes 1, 2, 4, 6, 7 | Edges 2→4, 4→6, 6→7
+     */
+    @Test
+    public void testCanModifyOrder_PriceAtLimit_ReturnsFalse() {
+        // Arrange: Add items to reach $100 total (MAX_ORDER_TOTAL = 100.0)
+        MenuItem testItem = new MenuItem("T001", "Expensive Item", 100.0, "ENTREE");
+        testItem.addAllowedModifier("EXTRA_CHEESE");
+        order.processOrderItem(testItem, null);
+
+        // Act
+        boolean result = order.canModifyOrder();
+
+        // Assert
+        assertFalse(result, "Should return false when totalPrice >= MAX_ORDER_TOTAL");
+        assertEquals(100.0, order.getTotalPrice(), 0.01, "Total should be at limit");
+    }
+
+    /*
+      CFG Path 4: Node 1 → 2 → 4 → 6 → 8
+      Tests: All conditions false (happy path)
+
+      Expected: return true
+      Coverage: Nodes 1, 2, 4, 6, 8 | Edges 2→4, 4→6, 6→8 (all "No" branches)
+     */
+    @Test
+    public void testCanModifyOrder_AllConditionsFalse_ReturnsTrue() {
+
+
+        // Act
+        boolean result = order.canModifyOrder();
+
+        // Assert
+        assertTrue(result, "Should return true when all conditions are false");
+        assertEquals(0, order.getOrderStatus(), "Status should be 0");
+        assertEquals(0, order.getItems().size(), "Should have 0 items");
+        assertEquals(0.0, order.getTotalPrice(), 0.01, "Total should be 0");
     }
 
 
+    // Additional Edge Case Tests
+
+
+    /*
+      Boundary test: orderStatus at boundary - 1
+      Tests: orderStatus = 1 (just below limit)
+     */
+    @Test
+    public void testCanModifyOrder_StatusBelowLimit_ReturnsTrue() {
+        order.setOrderStatus(1);
+
+        boolean result = order.canModifyOrder();
+
+        assertTrue(result, "Should return true when orderStatus = 1");
+    }
+
+    /*
+      Boundary test: items.size() at boundary - 1
+      Tests: 4 items (just below limit of 5)
+     */
+    @Test
+    public void testCanModifyOrder_ItemsBelowLimit_ReturnsTrue() {
+        MenuItem burger = restaurant.getMenuItem("B001");
+        for (int i = 0; i < 4; i++) {
+            order.processOrderItem(burger, null);
+        }
+
+        boolean result = order.canModifyOrder();
+
+        assertTrue(result, "Should return true when items = 4");
+    }
+
+    /*
+      Boundary test: totalPrice at boundary - 1
+      Tests: totalPrice just below $100
+     */
+    @Test
+    public void testCanModifyOrder_PriceBelowLimit_ReturnsTrue() {
+        MenuItem testItem = new MenuItem("T001", "Item", 99.99, "ENTREE");
+        testItem.addAllowedModifier("EXTRA_CHEESE");
+        order.processOrderItem(testItem, null);
+
+        boolean result = order.canModifyOrder();
+
+        assertTrue(result, "Should return true when total = $99.99");
+    }
 }
