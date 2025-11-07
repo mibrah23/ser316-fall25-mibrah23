@@ -171,4 +171,37 @@ public class WhiteBoxTestStarter {
 
         assertTrue(result, "Should return true when total = $99.99");
     }
+    // Tests for calculateBillSplit() method
+
+    @Test
+    public void testCalculateBillSplitInvalidDiners() {
+        Order order = new Order(null, "Test");
+        double[] result = order.calculateBillSplit(0, 10.0);
+        assertNull(result);
+    }
+
+    @Test
+    public void testCalculateBillSplitNegativeTip() {
+        Order order = new Order(null, "Test");
+        double[] result = order.calculateBillSplit(2, -5.0);
+        assertNull(result);
+    }
+
+    @Test
+    public void testCalculateBillSplitOver100Tip() {
+        Order order = new Order(null, "Test");
+        double[] result = order.calculateBillSplit(2, 150.0);
+        assertNull(result);
+    }
+
+    @Test
+    public void testCalculateBillSplitValid() {
+        Order order = new Order(null, "Test");
+        // Assuming getTotalPrice() returns something > 0
+        order.totalPrice = 100.0; // You can directly set it for testing
+        double[] result = order.calculateBillSplit(4, 10.0);
+        assertNotNull(result);
+        assertEquals(4, result.length);
+    }
+
 }
