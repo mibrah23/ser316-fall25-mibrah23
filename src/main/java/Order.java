@@ -138,13 +138,11 @@ public class Order {
         if (modifiers.contains("NO_CHEESE")) {
             if (modifiers.contains("EXTRA_CHEESE")) {
                 return false;
-            } else {
             }
         }
         if (modifiers.contains("NO_ONIONS")) {
             if (modifiers.contains("EXTRA_ONIONS")) {
                 return false;
-            } else {
             }
         }
         return true;
