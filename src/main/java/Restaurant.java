@@ -105,7 +105,7 @@ public class Restaurant {
      * @return
      */
     public double calculateDiscount(double price, double discountPercent) {
-        return price * discountPercent;
+        return price * (1 - discountPercent);
     }
 
     /**
