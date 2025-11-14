@@ -10,7 +10,7 @@ buildscript {
 plugins {
     id 'java'
     id 'application'
-   // id 'checkstyle'
+    id 'checkstyle'
    // id 'com.github.spotbugs' version '6.0.26'
    // id 'jacoco'
 }
@@ -51,21 +51,21 @@ test {
    // finalizedBy jacocoTestReport
 }
 
-// // Uncomment for Assignment 4 - Checkstyle configuration
-// checkstyle {
-//    toolVersion = '10.12.5'
-//    configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
-//    ignoreFailures = true
-//    showViolations = true
-// }
+ Uncomment for Assignment 4 - Checkstyle configuration
+ checkstyle {
+    toolVersion = '10.12.5'
+    configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+    ignoreFailures = true
+    showViolations = true
+ }
 
-// checkstyleMain {
-//    source = 'src/main/java'
-// }
+ checkstyleMain {
+    source = 'src/main/java'
+ }
 
-// checkstyleTest {
-//    source = 'src/test/java'
-// }
+ checkstyleTest {
+    source = 'src/test/java'
+ }
 
 // // Uncomment for Assignment 4 - SpotBugs configuration
 // spotbugs {
