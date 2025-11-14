@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
-import java.util.*;
-import java.io.Serializable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 
 /**
  * Represents a restaurant order for a table.
@@ -24,6 +24,24 @@ public class Order {
     /** Order status: 0=pending, 1=preparing, 2=ready, 3=delivered, 4=paid */
     protected int orderStatus;
 
+    /** Price for EXTRA_CHEESE, EXTRA_ONIONS, and SOUR_CREAM modifiers */
+    private static final double PREMIUM_MODIFIER_PRICE = 1.50;
+
+    /** Price for EXTRA_BREAD and BUTTER modifiers */
+    private static final double STANDARD_MODIFIER_PRICE = 1.00;
+
+    /** Price for CROUTONS modifier */
+    private static final double CROUTONS_PRICE = 0.75;
+
+    /** Price discount for NO_ modifiers */
+    private static final double REMOVAL_DISCOUNT = 0.50;
+
+    /** Appetizer discount percentage */
+    private static final double APPETIZER_DISCOUNT = 0.20;
+
+    /** Premium entree discount percentage */
+    private static final double PREMIUM_ENTREE_DISCOUNT = 0.15;
+
     /** Maximum allowed order total */
     private static final double MAX_ORDER_TOTAL = 100.0;
 
@@ -33,6 +51,27 @@ public class Order {
     /** Maximum total items in an order */
     private static final int MAX_TOTAL_ITEMS = 5;
 
+    /** Return code for order finalized */
+    private static final double RETURN_ORDER_FINALIZED = 5.0;
+
+    /** Return code for null item */
+    private static final double RETURN_NULL_ITEM = 3.1;
+
+    /** Return code for invalid item ID */
+    private static final double RETURN_INVALID_ID = 4.1;
+
+    /** Return code for item unavailable */
+    private static final double RETURN_ITEM_UNAVAILABLE = 3.0;
+
+    /** Return code for invalid modifier */
+    private static final double RETURN_INVALID_MODIFIER = 2.1;
+
+    /** Order status threshold for finalization */
+    private static final int ORDER_STATUS_FINALIZED = 3;
+
+    /** Order status for paid */
+    private static final int ORDER_STATUS_PAID = 4;
+
     /** Tracks applied promotions */
     protected List<String> appliedPromotions;
 
@@ -41,7 +80,10 @@ public class Order {
      * @param table the table
      * @param customerName customer name
      */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP",
+            justification = "SER316 TASK 2 SPOTBUGS FIX - Table class has no copy constructor")
     public Order(Table table, String customerName) {
+        // SER316 TASK 2 SPOTBUGS FIX - Table is a simple value object
         this.table = table;
         this.customerName = customerName;
         this.items = new ArrayList<>();
@@ -50,18 +92,14 @@ public class Order {
         this.appliedPromotions = new ArrayList<>();
     }
 
-    /**
-     * Default constructor for testing
-     */
-    public Order() {
-        this.table = new Table(1, 1);
-        this.customerName = "";
-        this.items = new ArrayList<>();
-        this.totalPrice = 0.0;
-        this.orderStatus = 0;
-        this.appliedPromotions = new ArrayList<>();
-    }
 
+    /**
+     * Initializes the order with a table and customer name.
+     * @param table the table for this order
+     * @param customerName the customer's name
+     */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+            justification = "SER316 TASK 2 SPOTBUGS FIX - Table class has no copy constructor")
     public void initOrder(Table table, String customerName) {
         this.table = table;
         this.customerName = customerName;
@@ -83,7 +121,12 @@ public class Order {
      * Gets the table
      * @return table object
      */
+    @SuppressFBWarnings(
+            value = "EI_EXPOSE_REP",
+            justification = "SER316 TASK 2: Table is used as an immutable value object in this design"
+    )
     public Table getTable() {
+        // SER316 TASK 2 SPOTBUGS FIX - Table is a simple value object
         return table;
     }
 
@@ -155,22 +198,21 @@ public class Order {
                 case "EXTRA_CHEESE":
                 case "EXTRA_ONIONS":
                 case "SOUR_CREAM":
-                    price += 1.50;
+                    price += PREMIUM_MODIFIER_PRICE;
                     break;
                 case "EXTRA_BREAD":
                 case "BUTTER":
-                    price += 1.00;
+                    price += STANDARD_MODIFIER_PRICE;
                     break;
                 case "CROUTONS":
-                    price += 0.75;
+                    price += CROUTONS_PRICE;
                     break;
                 case "NO_CHEESE":
                 case "NO_ONIONS":
                 case "NO_TOMATOES":
-                    price -= 0.50;
+                    price -= REMOVAL_DISCOUNT;
                     break;
                 default:
-                    // Unknown modifier, no price change
                     break;
             }
         }
@@ -181,18 +223,17 @@ public class Order {
         double discount = 0.0;
 
         if (item.getCategory().equals("APPETIZER")) {
-            discount = 0.20;
+            discount = APPETIZER_DISCOUNT;
             appliedPromotions.add("APPETIZER_SPECIAL_20");
         }
 
         if (item.getCategory().equals("ENTREE") && modifiers.size() >= 2) {
-            discount = Math.max(discount, 0.15);
+            discount = Math.max(discount, PREMIUM_ENTREE_DISCOUNT);
             appliedPromotions.add("PREMIUM_ENTREE_15");
         }
 
         return discount;
     }
-
     /**
      * Processes adding an item to the order with modifiers.
      * Validates the item, applies modifiers, calculates pricing, and updates order total.
@@ -273,26 +314,86 @@ public class Order {
      * @return status code indicating result
      */
     public double processOrderItem(MenuItem item, List<String> modifiers) {
+        // 1. Check if order status allows modifications (status < 3)
+        if (orderStatus >= ORDER_STATUS_FINALIZED) {
+            return 5.0;
+        }
+
+        // 2. Check if item is null
+        if (item == null) {
+            return RETURN_NULL_ITEM;
+        }
+
+        // 3. Validate item ID format (alphanumeric, not null)
+        String itemId = item.getItemId();
+        if (itemId == null || itemId.isEmpty() || !itemId.matches("^[a-zA-Z0-9]+$")) {
+            return RETURN_INVALID_ID;
+        }
+
+        // 4. Check if item is available
+        if (!item.isAvailable()) {
+            return RETURN_ITEM_UNAVAILABLE;
+        }
+
+        // 5. Check quantity limit (max 5 of same itemId)
+        if (getItemCountById(itemId) >= MAX_ITEM_QUANTITY) {
+            return 2.0;
+        }
+
+        // 6. Validate all modifiers are allowed for this item
+        if (modifiers != null && !modifiers.isEmpty()) {
+            for (String modifier : modifiers) {
+                if (!item.isModifierAllowed(modifier)) {
+                    return RETURN_INVALID_MODIFIER;
+                }
+            }
+        }
+
+        // 7. Calculate total price with modifiers
+        double itemPrice = item.getBasePrice();
+        if (modifiers != null && !modifiers.isEmpty()) {
+            itemPrice += calculateModifierPrice(modifiers);
+        }
+
+        // 8. Add item and update total
+        List<String> modifiersCopy = (modifiers == null) ? new ArrayList<>() : new ArrayList<>(modifiers);
+        OrderItem orderItem = new OrderItem(item, modifiersCopy, itemPrice);
+        items.add(orderItem);
+        totalPrice += itemPrice;
+
+        // 9. Return success code
         return 0.0;
     }
 
+    /**
+     * Submits the order, changing status to preparing.
+     */
     public void submitOrder() {
         orderStatus = 1;
     }
 
+    /**
+     * Marks the order as ready for delivery.
+     */
     public void markReady() {
         if (orderStatus < 2) {
             orderStatus = 2;
         }
     }
 
+    /**
+     * Marks the order as delivered.
+     */
     public void markDelivered() {
         orderStatus = 3;
     }
 
+    /**
+     * Marks the order as paid.
+     */
     public void markPaid() {
-        if (orderStatus >= 3) {
-            orderStatus = 4;
+        if (orderStatus >= ORDER_STATUS_FINALIZED) {
+            orderStatus = ORDER_STATUS_PAID;
         }
     }
 
@@ -357,6 +458,14 @@ public class Order {
         return splits;
     }
 
+    /**
+     * Generates a formatted summary of the order.
+     *
+     * @param incTotal whether to include the total price
+     * @param disc discount level (1=10%, 2=20%, 3=30%)
+     * @param tip tip amount to add
+     * @return formatted order summary string
+     */
     public String generateOrderSummary(boolean incTotal, int disc, double tip) {
         String str = "";
         for (int i = 0; i < items.size(); i++) {
@@ -379,6 +488,14 @@ public class Order {
         return str;
     }
 
+    /**
+     * Processes payment for the order and updates status to paid.
+     *
+     * @param type payment type (CASH, CARD, or CHECK)
+     * @param amount payment amount
+     * @param split whether to split payment among multiple people
+     * @param numPeople number of people splitting the payment
+     */
     public void processPayment(String type, double amount, boolean split, int numPeople) {
         if (type.equals("CASH")) {
             if (split) {
@@ -395,9 +512,15 @@ public class Order {
         } else if (type.equals("CHECK")) {
             System.out.println("Check payment");
         }
-        orderStatus = 4;
+        orderStatus = ORDER_STATUS_PAID;
     }
 
+    /**
+     * Gets the quantity of items with the specified ID.
+     *
+     * @param id the item ID to count
+     * @return count of items with that ID
+     */
     private int getItemQuantity(String id) {
         int qty = 0;
         try {
@@ -407,11 +530,19 @@ public class Order {
                 }
             }
         } catch (Exception e) {
+            // Ignore exception and return 0
         }
         return qty;
     }
 
-    private boolean validateOrderItemsForProcessingAndEnsureAllConstraintsAreSatisfiedIncludingQuantityLimitsAndPriceThresholds(MenuItem item, List<String> mods) {
+    /**
+     * Validates order items for processing constraints.
+     *
+     * @param item the menu item to validate
+     * @param mods list of modifiers
+     * @return true if valid, false otherwise
+     */
+    private boolean validateOrderItems(MenuItem item, List<String> mods) {
         return true;
     }
 
@@ -423,14 +554,54 @@ public class Order {
         private List<String> modifiers;
         private double price;
 
+        /**
+         * Creates a new order item.
+         *
+         * @param menuItem the menu item
+         * @param modifiers list of modifiers
+         * @param price final price with modifiers
+         */
+
         public OrderItem(MenuItem menuItem, List<String> modifiers, double price) {
-            this.menuItem = menuItem;
+            // SER316 TASK 2 SPOTBUGS FIX - Create defensive copy of MenuItem
+            MenuItem copy = new MenuItem(
+                    menuItem.getItemId(),
+                    menuItem.getName(),
+                    menuItem.getBasePrice(),
+                    menuItem.getCategory()
+            );
+            copy.setAvailable(menuItem.isAvailable());
+            copy.setStockCount(menuItem.getStockCount());
+            for (String mod : menuItem.getAllowedModifiers()) {
+                copy.addAllowedModifier(mod);
+            }
+            for (String flag : menuItem.getDietaryFlags()) {
+                copy.addDietaryFlag(flag);
+            }
+
+            this.menuItem = copy;
             this.modifiers = new ArrayList<>(modifiers);
             this.price = price;
         }
 
         public MenuItem getMenuItem() {
-            return menuItem;
+            // SER316 TASK 2 SPOTBUGS FIX - Return new MenuItem with same values
+            MenuItem copy = new MenuItem(
+                    menuItem.getItemId(),
+                    menuItem.getName(),
+                    menuItem.getBasePrice(),
+                    menuItem.getCategory()
+            );
+            // Copy other properties
+            copy.setAvailable(menuItem.isAvailable());
+            copy.setStockCount(menuItem.getStockCount());
+            for (String mod : menuItem.getAllowedModifiers()) {
+                copy.addAllowedModifier(mod);
+            }
+            for (String flag : menuItem.getDietaryFlags()) {
+                copy.addDietaryFlag(flag);
+            }
+            return copy;
         }
 
         public List<String> getModifiers() {
