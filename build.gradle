@@ -11,8 +11,8 @@ plugins {
     id 'java'
     id 'application'
     id 'checkstyle'
-   // id 'com.github.spotbugs' version '6.0.26'
-   // id 'jacoco'
+    id 'com.github.spotbugs' version '6.0.26'
+    id 'jacoco'
 }
 //
 //group = 'edu.asu.ser316'
@@ -51,7 +51,7 @@ test {
    // finalizedBy jacocoTestReport
 }
 
- Uncomment for Assignment 4 - Checkstyle configuration
+// Uncomment for Assignment 4 - Checkstyle configuration
  checkstyle {
     toolVersion = '10.12.5'
     configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
@@ -67,30 +67,30 @@ test {
     source = 'src/test/java'
  }
 
-// // Uncomment for Assignment 4 - SpotBugs configuration
-// spotbugs {
-//    ignoreFailures = true
-// }
+ // Uncomment for Assignment 4 - SpotBugs configuration
+ spotbugs {
+    ignoreFailures = true
+ }
 
-// spotbugsMain {
-//    reports {
-//        html {
-//            required = true
-//            outputLocation = file("$buildDir/reports/spotbugs/main.html")
-//            setStylesheet('fancy-hist.xsl')
-//        }
-//    }
-// }
+ spotbugsMain {
+    reports {
+        html {
+            required = true
+            outputLocation = file("$buildDir/reports/spotbugs/main.html")
+            setStylesheet('fancy-hist.xsl')
+        }
+    }
+ }
 
-// spotbugsTest {
-//    reports {
-//        html {
-//            required = true
-//            outputLocation = file("$buildDir/reports/spotbugs/test.html")
-//            setStylesheet('fancy-hist.xsl')
-//        }
-//    }
-// }
+ spotbugsTest {
+    reports {
+        html {
+            required = true
+            outputLocation = file("$buildDir/reports/spotbugs/test.html")
+            setStylesheet('fancy-hist.xsl')
+        }
+    }
+ }
 
 // // JaCoCo for code coverage
 // jacoco {
