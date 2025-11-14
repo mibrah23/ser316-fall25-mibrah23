@@ -138,35 +138,43 @@ public class Order {
         if (modifiers.contains("NO_CHEESE")) {
             if (modifiers.contains("EXTRA_CHEESE")) {
                 return false;
-            } else {
             }
         }
         if (modifiers.contains("NO_ONIONS")) {
             if (modifiers.contains("EXTRA_ONIONS")) {
                 return false;
-            } else {
             }
         }
         return true;
     }
 
     protected double calculateModifierPrice(List<String> modifiers) {
-        double prc = 0.0;
-        for (String mod : modifiers) {
-            if(mod.equals("EXTRA_CHEESE")||mod.equals("EXTRA_ONIONS")||mod.equals("SOUR_CREAM")){
-                prc+=1.50;
-            }
-            if(mod.equals("EXTRA_BREAD")||mod.equals("BUTTER")){
-                prc+=1.00;
-            }
-            if(mod.equals("CROUTONS")){
-                prc+=0.75;
-            }
-            if(mod.equals("NO_CHEESE")||mod.equals("NO_ONIONS")||mod.equals("NO_TOMATOES")){
-                prc-=0.50;
+        double price = 0.0;
+        for (String modifier : modifiers) {
+            switch (modifier) {
+                case "EXTRA_CHEESE":
+                case "EXTRA_ONIONS":
+                case "SOUR_CREAM":
+                    price += 1.50;
+                    break;
+                case "EXTRA_BREAD":
+                case "BUTTER":
+                    price += 1.00;
+                    break;
+                case "CROUTONS":
+                    price += 0.75;
+                    break;
+                case "NO_CHEESE":
+                case "NO_ONIONS":
+                case "NO_TOMATOES":
+                    price -= 0.50;
+                    break;
+                default:
+                    // Unknown modifier, no price change
+                    break;
             }
         }
-        return prc;
+        return price;
     }
 
     protected double calculatePromotion(MenuItem item, List<String> modifiers) {
