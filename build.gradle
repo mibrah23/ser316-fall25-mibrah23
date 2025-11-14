@@ -31,6 +31,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.9.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.9.2'
+    implementation 'com.github.spotbugs:spotbugs-annotations:4.8.6'
     implementation files('cls/')
     testImplementation files('cls/')
 }
